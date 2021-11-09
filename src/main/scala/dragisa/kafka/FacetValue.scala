@@ -1,20 +1,20 @@
 package dragisa.kafka
 
+import com.sksamuel.avro4s._
 import io.circe.Json
-import vulcan.Codec
+import org.apache.avro.Schema
 
 import java.util.UUID
 
 final case class FacetValue(
     uuid: UUID,
-    entity_def_id: String,
-    facet_id: String,
+    entityDefId: String,
+    facetId: String,
     properties: Json
 )
 
 object FacetValue {
-  import vulcan.generic._
   import CirceAvro._
-
-  implicit val facetValueCodec: Codec[FacetValue] = Codec.derive[FacetValue]
+  implicit val snake: FieldMapper          = SnakeCase
+  implicit val faceValueAvroSchema: Schema = AvroSchema[FacetValue]
 }

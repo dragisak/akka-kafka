@@ -16,7 +16,8 @@ object Main extends App {
     case Right(kafkConfig) =>
       implicit val system: ActorSystem = ActorSystem("Main")
       val config                       = system.settings.config.getConfig("akka.kafka.consumer")
-      val consumerConfig               = ConsumerSettings(config, new StringDeserializer, new ByteArrayDeserializer)
+
+      val consumerConfig = ConsumerSettings(config, new StringDeserializer, new ByteArrayDeserializer)
         .withBootstrapServers(kafkConfig.bootstrap)
         .withGroupId(kafkConfig.groupId)
         .withProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "latest")
