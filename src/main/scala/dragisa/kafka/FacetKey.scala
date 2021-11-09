@@ -1,7 +1,9 @@
 package dragisa.kafka
 
 import com.sksamuel.avro4s._
+import com.sksamuel.avro4s.kafka.GenericSerde
 import org.apache.avro.Schema
+import org.apache.kafka.common.serialization.Serde
 
 import java.util.UUID
 
@@ -16,4 +18,5 @@ object FacetKey {
 
   implicit val faceKeyAvroSchema: Schema = AvroSchema[FacetKey]
 
+  val facetKeySerde: Serde[FacetKey] = new GenericSerde[FacetKey](BinaryFormat)
 }
