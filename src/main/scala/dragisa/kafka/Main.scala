@@ -6,7 +6,7 @@ import akka.kafka.{ConsumerSettings, Subscriptions}
 import akka.stream.scaladsl._
 import com.sksamuel.avro4s.AvroInputStream
 import dragisa.kafka.config.KafkaConfig
-import org.apache.kafka.clients.consumer.ConsumerRecord
+import org.apache.kafka.clients.consumer.{ConsumerConfig, ConsumerRecord}
 import org.apache.kafka.common.serialization.ByteArrayDeserializer
 import org.slf4j.LoggerFactory
 import pureconfig._
@@ -36,7 +36,7 @@ object Main extends App {
       )
         .withBootstrapServers(kafkConfig.bootstrap)
         .withGroupId(kafkConfig.groupId)
-      //  .withProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest")
+        .withProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest")
 
       val subscription = Subscriptions.topics(kafkConfig.topic)
 
