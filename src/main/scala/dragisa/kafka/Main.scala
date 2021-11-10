@@ -3,6 +3,7 @@ package dragisa.kafka
 import akka.Done
 import akka.actor.{ActorSystem, CoordinatedShutdown}
 import akka.kafka.scaladsl.Consumer
+import akka.kafka.scaladsl.Consumer.DrainingControl
 import akka.kafka.{ConsumerSettings, Subscriptions}
 import akka.stream.KillSwitches
 import akka.stream.scaladsl._
@@ -41,8 +42,6 @@ object Main extends App {
       logger.info(FacetKey.faceKeyAvroSchema.toString(true))
       logger.info(FacetValue.faceValueAvroSchema.toString(true))
 
-      val sharedKillSwitch = KillSwitches.shared("hdfs-switch")
-
       val source: Source[ConsumerRecord[FacetKey, FacetValue], Consumer.Control] =
         Consumer.plainSource(consumerConfig, subscription)
 
@@ -60,23 +59,21 @@ object Main extends App {
       logger.info("Starting")
 
       val flow = source
-        .toMat(sink)(Keep.both)
+        .toMat(sink)(DrainingControl.apply)
 
-      val (control, f) = flow.run()
+      val control = flow.run()
 
       CoordinatedShutdown(system)
         .addTask(CoordinatedShutdown.PhaseServiceRequestsDone, "complete hdfs sinks") { () =>
-          control.shutdown()
+          val f = control.drainAndShutdown()
+          f.onComplete {
+            case Success(_)   =>
+              logger.info("Bye")
+            case Failure(err) =>
+              logger.error("Ouch!", err)
+          }
+          f
         }
-
-      f.onComplete {
-        case Success(_)   =>
-          logger.info("Bye")
-          system.terminate()
-        case Failure(err) =>
-          logger.error("Ouch!", err)
-          system.terminate()
-      }
 
       logger.info("End")
   }
