@@ -13,9 +13,12 @@ import pureconfig._
 import pureconfig.generic.auto._
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration.Duration
 import scala.util.{Failure, Success}
 
 object Main extends App {
+
+  private type KafkaMessage = ConsumerRecord[FacetKey, FacetValue]
 
   private val logger = LoggerFactory.getLogger(getClass)
 
@@ -29,30 +32,32 @@ object Main extends App {
       logger.info(FacetKey.faceKeyAvroSchema.toString(true))
       logger.info(FacetValue.faceValueAvroSchema.toString(true))
 
-      val consumerConfig: ConsumerSettings[Array[Byte], Array[Byte]] = ConsumerSettings(
+      val consumerConfig: ConsumerSettings[FacetKey, FacetValue] = ConsumerSettings(
         system = system,
-        keyDeserializer = new ByteArrayDeserializer,
-        valueDeserializer = new ByteArrayDeserializer
+        keyDeserializer = FacetKey.facetKeySerde.deserializer(),
+        valueDeserializer = FacetValue.facetValueSerde.deserializer()
       )
         .withBootstrapServers(kafkConfig.bootstrap)
         .withGroupId(kafkConfig.groupId)
+        .withStopTimeout(Duration.Zero)
         .withProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest")
+        .withProperty(ConsumerConfig.REQUEST_TIMEOUT_MS_CONFIG, "60000")
 
       val subscription = Subscriptions.topics(kafkConfig.topic)
 
       val source = Consumer.plainSource(consumerConfig, subscription)
-      val sink   = Sink.foreach(logByteMessage)
+      val sink   = Sink.foreach(logMesssage)
       val graph  = source
         .log("msg")
         // .map(deserialize)
-        .toMat(sink)(Consumer.DrainingControl.apply)
+        .toMat(sink)(Keep.both)
 
       logger.info("Starting")
-      val control = graph.run()
+      val (control, completion) = graph.run()
 
       CoordinatedShutdown(system)
         .addTask(CoordinatedShutdown.PhaseServiceRequestsDone, "complete hdfs sinks") { () =>
-          val f = control.drainAndShutdown()
+          val f = control.drainAndShutdown(completion)
           f.onComplete {
             case Success(_)   =>
               logger.info("Leaving ...")
@@ -64,9 +69,9 @@ object Main extends App {
 
   }
 
-  private def logMessage(msg: Option[FacetValue]): Unit = {
+  private def logMesssage(msg: KafkaMessage): Unit = {
     logger.info(
-      msg
+      Option(msg.value())
         .flatMap(_.properties)
         .map(_.spaces2)
         .getOrElse("null")

@@ -1,7 +1,7 @@
 package dragisa.kafka
 
 import com.sksamuel.avro4s.{Avro4sDecodingException, Decoder, Encoder, SchemaFor}
-import io.circe.{Json, JsonObject}
+import io.circe.Json
 import io.circe.parser._
 import org.apache.avro.Schema
 
@@ -10,12 +10,12 @@ object CirceAvro {
   implicit val circeJsonSchemaFor: SchemaFor[Json] = SchemaFor[Json](Schema.create(Schema.Type.STRING))
 
   implicit val circeEncoder: Encoder[Json] = new Encoder[Json] {
-    override def schemaFor: SchemaFor[Json]  = circeJsonSchemaFor
+    override val schemaFor: SchemaFor[Json]  = circeJsonSchemaFor
     override def encode(value: Json): String = value.noSpaces
   }
 
   implicit val circeDecoder: Decoder[Json] = new Decoder[Json] {
-    override def schemaFor: SchemaFor[Json] = circeJsonSchemaFor
+    override val schemaFor: SchemaFor[Json] = circeJsonSchemaFor
     override def decode(value: Any): Json   = value match {
       case str: String =>
         parse(str) match {
