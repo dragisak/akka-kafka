@@ -75,6 +75,5 @@ object Main extends App {
           f
         }
 
-      logger.info("End")
   }
 }
