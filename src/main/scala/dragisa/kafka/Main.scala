@@ -21,10 +21,9 @@ object Main extends App {
     case Right(kafkConfig) =>
       implicit val system: ActorSystem = ActorSystem("Main")
       import system.dispatcher
-      val config                       = system.settings.config.getConfig("akka.kafka.consumer")
 
       val consumerConfig: ConsumerSettings[FacetKey, FacetValue] = ConsumerSettings(
-        config = config,
+        system = system,
         keyDeserializer = FacetKey.facetKeySerde.deserializer(),
         valueDeserializer = FacetValue.facetValueSerde.deserializer()
       )
@@ -41,5 +40,7 @@ object Main extends App {
       val f = consumer.runForeach(v => logger.info(v.value().properties.spaces2))
 
       f.onComplete(_ => logger.info("Bye"))
+
+      logger.info("End")
   }
 }
