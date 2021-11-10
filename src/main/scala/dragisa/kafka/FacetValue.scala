@@ -17,8 +17,9 @@ final case class FacetValue(
 
 object FacetValue {
   import CirceAvro._
-  implicit val snake: FieldMapper          = SnakeCase
-  implicit val faceValueAvroSchema: Schema = AvroSchema[FacetValue]
+  implicit val snake: FieldMapper                    = SnakeCase
+  implicit val faceValueAvroSchema: Schema           = AvroSchema[FacetValue]
+  implicit val faceValueDecoder: Decoder[FacetValue] = Decoder[FacetValue]
 
   val facetValueSerde: Serde[FacetValue] = new GenericSerde[FacetValue](BinaryFormat)
 

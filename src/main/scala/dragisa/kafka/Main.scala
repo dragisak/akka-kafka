@@ -4,20 +4,18 @@ import akka.actor.{ActorSystem, CoordinatedShutdown}
 import akka.kafka.scaladsl._
 import akka.kafka.{ConsumerSettings, Subscriptions}
 import akka.stream.scaladsl._
+import com.sksamuel.avro4s.AvroInputStream
 import dragisa.kafka.config.KafkaConfig
-import org.apache.kafka.clients.consumer.{ConsumerConfig, ConsumerRecord}
+import org.apache.kafka.clients.consumer.ConsumerRecord
+import org.apache.kafka.common.serialization.ByteArrayDeserializer
 import org.slf4j.LoggerFactory
 import pureconfig._
 import pureconfig.generic.auto._
 
-import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration._
 import scala.util.{Failure, Success}
 
 object Main extends App {
-
-  private type KafkaMessage = ConsumerRecord[FacetKey, FacetValue]
 
   private val logger = LoggerFactory.getLogger(getClass)
 
@@ -31,20 +29,23 @@ object Main extends App {
       logger.info(FacetKey.faceKeyAvroSchema.toString(true))
       logger.info(FacetValue.faceValueAvroSchema.toString(true))
 
-      val consumerConfig: ConsumerSettings[FacetKey, FacetValue] = ConsumerSettings(
+      val consumerConfig: ConsumerSettings[Array[Byte], Array[Byte]] = ConsumerSettings(
         system = system,
-        keyDeserializer = FacetKey.facetKeySerde.deserializer(),
-        valueDeserializer = FacetValue.facetValueSerde.deserializer()
+        keyDeserializer = new ByteArrayDeserializer,
+        valueDeserializer = new ByteArrayDeserializer
       )
         .withBootstrapServers(kafkConfig.bootstrap)
         .withGroupId(kafkConfig.groupId)
-        .withProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest")
+      //  .withProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest")
 
       val subscription = Subscriptions.topics(kafkConfig.topic)
 
       val source = Consumer.plainSource(consumerConfig, subscription)
-      val sink   = Sink.foreach(logMesssage)
-      val graph  = source.toMat(sink)(Consumer.DrainingControl.apply)
+      val sink   = Sink.foreach(logByteMessage)
+      val graph  = source
+        .log("msg")
+        // .map(deserialize)
+        .toMat(sink)(Consumer.DrainingControl.apply)
 
       logger.info("Starting")
       val control = graph.run()
@@ -61,17 +62,30 @@ object Main extends App {
           f
         }
 
-      Await.result(system.whenTerminated, 1.minute)
-      logger.info("Bye.")
-
   }
 
-  private def logMesssage(msg: KafkaMessage): Unit = {
+  private def logMessage(msg: Option[FacetValue]): Unit = {
     logger.info(
-      Option(msg.value())
+      msg
         .flatMap(_.properties)
         .map(_.spaces2)
         .getOrElse("null")
     )
+  }
+
+  private def logByteMessage(msg: ConsumerRecord[Array[Byte], Array[Byte]]): Unit = {
+    logger.info(
+      s"Got ${msg.value().length} bytes"
+    )
+  }
+
+  private def deserialize(rec: ConsumerRecord[Array[Byte], Array[Byte]]): Option[FacetValue] = {
+    val input = AvroInputStream.binary[FacetValue]
+    for {
+      bytes <- Option(rec.value())
+      src    = input.from(bytes)
+      res   <- src.build.iterator.toSeq.headOption
+
+    } yield res
   }
 }
