@@ -1,6 +1,5 @@
 package dragisa.kafka
 
-import akka.Done
 import akka.actor.{ActorSystem, CoordinatedShutdown}
 import akka.kafka.scaladsl._
 import akka.kafka.{ConsumerSettings, Subscriptions}
@@ -11,8 +10,9 @@ import org.slf4j.LoggerFactory
 import pureconfig._
 import pureconfig.generic.auto._
 
+import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import scala.concurrent.duration._
 import scala.util.{Failure, Success}
 
 object Main extends App {
@@ -28,6 +28,9 @@ object Main extends App {
     case Right(kafkConfig) =>
       implicit val system: ActorSystem = ActorSystem("Main")
 
+      logger.info(FacetKey.faceKeyAvroSchema.toString(true))
+      logger.info(FacetValue.faceValueAvroSchema.toString(true))
+
       val consumerConfig: ConsumerSettings[FacetKey, FacetValue] = ConsumerSettings(
         system = system,
         keyDeserializer = FacetKey.facetKeySerde.deserializer(),
@@ -38,9 +41,6 @@ object Main extends App {
         .withProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest")
 
       val subscription = Subscriptions.topics(kafkConfig.topic)
-
-      logger.info(FacetKey.faceKeyAvroSchema.toString(true))
-      logger.info(FacetValue.faceValueAvroSchema.toString(true))
 
       val source = Consumer.plainSource(consumerConfig, subscription)
       val sink   = Sink.foreach(logMesssage)
@@ -60,6 +60,10 @@ object Main extends App {
           }
           f
         }
+
+      Await.result(system.whenTerminated, 1.minute)
+      logger.info("Bye.")
+
   }
 
   private def logMesssage(msg: KafkaMessage): Unit = {
