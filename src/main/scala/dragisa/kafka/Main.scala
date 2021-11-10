@@ -2,10 +2,8 @@ package dragisa.kafka
 
 import akka.Done
 import akka.actor.{ActorSystem, CoordinatedShutdown}
-import akka.kafka.scaladsl.Consumer
-import akka.kafka.scaladsl.Consumer.DrainingControl
+import akka.kafka.scaladsl._
 import akka.kafka.{ConsumerSettings, Subscriptions}
-import akka.stream.KillSwitches
 import akka.stream.scaladsl._
 import dragisa.kafka.config.KafkaConfig
 import org.apache.kafka.clients.consumer.{ConsumerConfig, ConsumerRecord}
@@ -18,6 +16,8 @@ import scala.concurrent.Future
 import scala.util.{Failure, Success}
 
 object Main extends App {
+
+  private type KafkaMessage = ConsumerRecord[FacetKey, FacetValue]
 
   private val logger = LoggerFactory.getLogger(getClass)
 
@@ -42,12 +42,12 @@ object Main extends App {
       logger.info(FacetKey.faceKeyAvroSchema.toString(true))
       logger.info(FacetValue.faceValueAvroSchema.toString(true))
 
-      val source: Source[ConsumerRecord[FacetKey, FacetValue], Consumer.Control] =
+      val source: Source[KafkaMessage, Consumer.Control] =
         Consumer.plainSource(consumerConfig, subscription)
 
-      val sink: Sink[ConsumerRecord[FacetKey, FacetValue], Future[Done]] =
+      val sink: Sink[KafkaMessage, Future[Done]] =
         Sink
-          .foreach[ConsumerRecord[FacetKey, FacetValue]](v =>
+          .foreach(v =>
             logger.info(
               Option(v.value())
                 .flatMap(_.properties)
@@ -59,7 +59,7 @@ object Main extends App {
       logger.info("Starting")
 
       val flow = source
-        .toMat(sink)(DrainingControl.apply)
+        .toMat(sink)(Consumer.DrainingControl.apply)
 
       val control = flow.run()
 
