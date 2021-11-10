@@ -68,7 +68,7 @@ object Main extends App {
           val f = control.drainAndShutdown()
           f.onComplete {
             case Success(_)   =>
-              logger.info("Bye")
+              logger.info("Leaving ...")
             case Failure(err) =>
               logger.error("Ouch!", err)
           }
