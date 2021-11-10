@@ -14,6 +14,7 @@ val catsVersion         = "2.6.1"
 libraryDependencies ++= List(
   "com.typesafe.akka"         %% "akka-stream-kafka"        % alpakkaKafkaVersion,
   "com.typesafe.akka"         %% "akka-stream"              % akkaVersion,
+  "com.typesafe.akka"         %% "akka-slf4j"               % akkaVersion,
   "com.fasterxml.jackson.core" % "jackson-databind"         % jacksonVersion,
   "com.sksamuel.avro4s"       %% "avro4s-core"              % avro4sVersion,
   "com.sksamuel.avro4s"       %% "avro4s-kafka"             % avro4sVersion,
@@ -21,6 +22,7 @@ libraryDependencies ++= List(
   "io.circe"                  %% "circe-generic"            % circeVersion,
   "io.circe"                  %% "circe-parser"             % circeVersion,
   "org.typelevel"             %% "cats-core"                % catsVersion,
+  "ch.qos.logback"             % "logback-classic"          % "1.2.6",
   "com.github.pureconfig"     %% "pureconfig"               % "0.17.0",
   "org.scalatest"             %% "scalatest-wordspec"       % "3.2.10"   % Test,
   "org.scalatest"             %% "scalatest-shouldmatchers" % "3.2.10"   % Test,

@@ -6,10 +6,14 @@ import akka.kafka.{ConsumerSettings, Subscriptions}
 import akka.stream.scaladsl.Source
 import dragisa.kafka.config.KafkaConfig
 import org.apache.kafka.clients.consumer.{ConsumerConfig, ConsumerRecord}
+import org.slf4j.LoggerFactory
 import pureconfig._
 import pureconfig.generic.auto._
 
 object Main extends App {
+
+  private val logger = LoggerFactory.getLogger(getClass)
+
   ConfigSource.default.at("dragisa.kafka").load[KafkaConfig] match {
     case Left(error)       =>
       throw new RuntimeException(s"Bad config: ${error.toList.map(_.description).mkString("\n")}")
@@ -28,12 +32,14 @@ object Main extends App {
         .withGroupId(kafkConfig.groupId)
         .withProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest")
 
-      val subscription                                                             = Subscriptions.topics(kafkConfig.topic)
+      val subscription = Subscriptions.topics(kafkConfig.topic)
+
       val consumer: Source[ConsumerRecord[FacetKey, FacetValue], Consumer.Control] =
         Consumer.plainSource(consumerConfig, subscription)
 
-      val f = consumer.runForeach(v => println(v.value().properties.spaces2))
+      logger.info("Starting")
+      val f = consumer.runForeach(v => logger.info(v.value().properties.spaces2))
 
-      f.onComplete(_ => sys.exit(0))
+      f.onComplete(_ => logger.info("Bye"))
   }
 }
