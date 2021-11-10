@@ -42,26 +42,12 @@ object Main extends App {
       logger.info(FacetKey.faceKeyAvroSchema.toString(true))
       logger.info(FacetValue.faceValueAvroSchema.toString(true))
 
-      val source: Source[KafkaMessage, Consumer.Control] =
-        Consumer.plainSource(consumerConfig, subscription)
-
-      val sink: Sink[KafkaMessage, Future[Done]] =
-        Sink
-          .foreach(v =>
-            logger.info(
-              Option(v.value())
-                .flatMap(_.properties)
-                .map(_.spaces2)
-                .getOrElse("null")
-            )
-          )
+      val source = Consumer.plainSource(consumerConfig, subscription)
+      val sink   = Sink.foreach(logMesssage)
+      val graph  = source.toMat(sink)(Consumer.DrainingControl.apply)
 
       logger.info("Starting")
-
-      val flow = source
-        .toMat(sink)(Consumer.DrainingControl.apply)
-
-      val control = flow.run()
+      val control = graph.run()
 
       CoordinatedShutdown(system)
         .addTask(CoordinatedShutdown.PhaseServiceRequestsDone, "complete hdfs sinks") { () =>
@@ -74,6 +60,14 @@ object Main extends App {
           }
           f
         }
+  }
 
+  private def logMesssage(msg: KafkaMessage): Unit = {
+    logger.info(
+      Option(msg.value())
+        .flatMap(_.properties)
+        .map(_.spaces2)
+        .getOrElse("null")
+    )
   }
 }
