@@ -1,14 +1,20 @@
 package dragisa.kafka
 
-import akka.actor.ActorSystem
+import akka.Done
+import akka.actor.{ActorSystem, CoordinatedShutdown}
 import akka.kafka.scaladsl.Consumer
 import akka.kafka.{ConsumerSettings, Subscriptions}
-import akka.stream.scaladsl.Source
+import akka.stream.KillSwitches
+import akka.stream.scaladsl._
 import dragisa.kafka.config.KafkaConfig
 import org.apache.kafka.clients.consumer.{ConsumerConfig, ConsumerRecord}
 import org.slf4j.LoggerFactory
 import pureconfig._
 import pureconfig.generic.auto._
+
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
+import scala.util.{Failure, Success}
 
 object Main extends App {
 
@@ -20,7 +26,6 @@ object Main extends App {
       sys.exit(-1)
     case Right(kafkConfig) =>
       implicit val system: ActorSystem = ActorSystem("Main")
-      import system.dispatcher
 
       val consumerConfig: ConsumerSettings[FacetKey, FacetValue] = ConsumerSettings(
         system = system,
@@ -33,13 +38,45 @@ object Main extends App {
 
       val subscription = Subscriptions.topics(kafkConfig.topic)
 
-      val consumer: Source[ConsumerRecord[FacetKey, FacetValue], Consumer.Control] =
+      logger.info(FacetKey.faceKeyAvroSchema.toString(true))
+      logger.info(FacetValue.faceValueAvroSchema.toString(true))
+
+      val sharedKillSwitch = KillSwitches.shared("hdfs-switch")
+
+      val source: Source[ConsumerRecord[FacetKey, FacetValue], Consumer.Control] =
         Consumer.plainSource(consumerConfig, subscription)
 
-      logger.info("Starting")
-      val f = consumer.runForeach(v => logger.info(v.value().properties.spaces2))
+      val sink: Sink[ConsumerRecord[FacetKey, FacetValue], Future[Done]] =
+        Sink
+          .foreach[ConsumerRecord[FacetKey, FacetValue]](v =>
+            logger.info(
+              Option(v.value())
+                .flatMap(_.properties)
+                .map(_.spaces2)
+                .getOrElse("null")
+            )
+          )
 
-      f.onComplete(_ => logger.info("Bye"))
+      logger.info("Starting")
+
+      val flow = source
+        .toMat(sink)(Keep.both)
+
+      val (control, f) = flow.run()
+
+      CoordinatedShutdown(system)
+        .addTask(CoordinatedShutdown.PhaseServiceRequestsDone, "complete hdfs sinks") { () =>
+          control.shutdown()
+        }
+
+      f.onComplete {
+        case Success(_)   =>
+          logger.info("Bye")
+          system.terminate()
+        case Failure(err) =>
+          logger.error("Ouch!", err)
+          system.terminate()
+      }
 
       logger.info("End")
   }

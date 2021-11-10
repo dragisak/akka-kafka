@@ -12,7 +12,7 @@ final case class FacetValue(
     uuid: UUID,
     entityDefId: String,
     facetId: String,
-    properties: Json
+    properties: Option[Json]
 )
 
 object FacetValue {
