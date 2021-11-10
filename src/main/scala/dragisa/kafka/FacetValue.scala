@@ -13,7 +13,7 @@ final case class FacetValue(
     entityDefId: String,
     facetId: String,
     uuid: UUID,
-    properties: Option[Json],
+    properties: Option[Json] = None,
     createdAt: ZonedDateTime,
     updatedAt: ZonedDateTime
 )
