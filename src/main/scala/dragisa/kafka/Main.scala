@@ -4,7 +4,8 @@ import akka.actor.{ActorSystem, CoordinatedShutdown}
 import akka.kafka.scaladsl._
 import akka.kafka.{ConsumerSettings, Subscriptions}
 import akka.stream.scaladsl._
-import com.sksamuel.avro4s.AvroInputStream
+import com.sksamuel.avro4s.{AvroInputStream, AvroSchema}
+import dragisa.kafka
 import dragisa.kafka.config.KafkaConfig
 import org.apache.kafka.clients.consumer.{ConsumerConfig, ConsumerRecord}
 import org.apache.kafka.common.serialization.ByteArrayDeserializer
@@ -13,7 +14,7 @@ import pureconfig._
 import pureconfig.generic.auto._
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration.Duration
+import scala.concurrent.duration._
 import scala.util.{Failure, Success}
 
 object Main extends App {
@@ -29,10 +30,10 @@ object Main extends App {
     case Right(kafkConfig) =>
       implicit val system: ActorSystem = ActorSystem("Main")
 
-      logger.info(FacetKey.faceKeyAvroSchema.toString(true))
-      logger.info(FacetValue.faceValueAvroSchema.toString(true))
+      logger.info(FacetKey.facetKeySerde.schema.toString(true))
+      logger.info(FacetValue.facetValueSerde.schema.toString(true))
 
-      val consumerConfig: ConsumerSettings[FacetKey, FacetValue] = ConsumerSettings(
+      val consumerConfig = ConsumerSettings(
         system = system,
         keyDeserializer = FacetKey.facetKeySerde.deserializer(),
         valueDeserializer = FacetValue.facetValueSerde.deserializer()
@@ -40,6 +41,8 @@ object Main extends App {
         .withBootstrapServers(kafkConfig.bootstrap)
         .withGroupId(kafkConfig.groupId)
         .withStopTimeout(Duration.Zero)
+        .withPollTimeout(5.second)
+        .withMetadataRequestTimeout(5.second)
         .withProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest")
         .withProperty(ConsumerConfig.REQUEST_TIMEOUT_MS_CONFIG, "60000")
 
@@ -84,13 +87,13 @@ object Main extends App {
     )
   }
 
-  private def deserialize(rec: ConsumerRecord[Array[Byte], Array[Byte]]): Option[FacetValue] = {
-    val input = AvroInputStream.binary[FacetValue]
-    for {
-      bytes <- Option(rec.value())
-      src    = input.from(bytes)
-      res   <- src.build.iterator.toSeq.headOption
-
-    } yield res
-  }
+//  private def deserialize(rec: ConsumerRecord[Array[Byte], Array[Byte]]): Option[FacetValue] = {
+//    val input = AvroInputStream.binary[FacetValue]
+//    for {
+//      bytes <- Option(rec.value())
+//      src    = input.from(bytes)
+//      res   <- src.build.iterator.toSeq.headOption
+//
+//    } yield res
+//  }
 }

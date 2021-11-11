@@ -14,10 +14,11 @@ final case class FacetKey(
 )
 
 object FacetKey {
-  implicit val snake: FieldMapper = SnakeCase
+  private implicit val snake: FieldMapper = SnakeCase
 
-  implicit val faceKeyAvroSchema: Schema         = AvroSchema[FacetKey]
-  implicit val faceKeyDecoder: Decoder[FacetKey] = Decoder[FacetKey]
+//  val faceKeyAvroSchema: Schema = AvroSchema[FacetKey]
+//  implicit val faceKeyDecoder: Decoder[FacetKey]      = Decoder[FacetKey]
+//  implicit val faceKeyEncoder: Encoder[FacetKey]      = Encoder[FacetKey]
 
-  val facetKeySerde: Serde[FacetKey] = new GenericSerde[FacetKey](BinaryFormat)
+  val facetKeySerde: GenericSerde[FacetKey] = new GenericSerde[FacetKey](BinaryFormat)
 }
