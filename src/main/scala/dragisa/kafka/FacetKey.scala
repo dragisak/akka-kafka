@@ -42,9 +42,5 @@ final case class FacetKey(
 object FacetKey {
   private implicit val snake: FieldMapper = SnakeCase
 
-//  val faceKeyAvroSchema: Schema = AvroSchema[FacetKey]
-//  implicit val faceKeyDecoder: Decoder[FacetKey]      = Decoder[FacetKey]
-//  implicit val faceKeyEncoder: Encoder[FacetKey]      = Encoder[FacetKey]
-
   val serde: GenericSerde[FacetKey] = ConfluentKafkaSerde[FacetKey]
 }
