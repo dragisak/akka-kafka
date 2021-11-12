@@ -30,13 +30,13 @@ object Main extends App {
     case Right(kafkConfig) =>
       implicit val system: ActorSystem = ActorSystem("Main")
 
-      logger.info(FacetKey.facetKeySerde.schema.toString(true))
-      logger.info(FacetValue.facetValueSerde.schema.toString(true))
+      logger.info(FacetKey.serde.schema.toString(true))
+      logger.info(FacetValue.serde.schema.toString(true))
 
       val consumerConfig = ConsumerSettings(
         system = system,
-        keyDeserializer = FacetKey.facetKeySerde.deserializer(),
-        valueDeserializer = FacetValue.facetValueSerde.deserializer()
+        keyDeserializer = FacetKey.serde.deserializer(),
+        valueDeserializer = FacetValue.serde.deserializer()
       )
         .withBootstrapServers(kafkConfig.bootstrap)
         .withGroupId(kafkConfig.groupId)

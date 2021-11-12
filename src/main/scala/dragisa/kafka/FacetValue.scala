@@ -78,10 +78,6 @@ object FacetValue {
 
   private implicit val snake: FieldMapper = SnakeCase
 
-//  val faceValueAvroSchema: Schema = AvroSchema[FacetValue]
-//  implicit val faceValueEncoder: Encoder[FacetValue]      = Encoder[FacetValue]
-//  implicit val faceValueDecoder: Decoder[FacetValue]      = Decoder[FacetValue]
-
-  val facetValueSerde: GenericSerde[FacetValue] = KafkaSerde[FacetValue](BinaryFormat)
+  val serde: GenericSerde[FacetValue] = ConfluentKafkaSerde[FacetValue](BinaryFormat)
 
 }
