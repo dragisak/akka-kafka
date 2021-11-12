@@ -7,8 +7,6 @@ import akka.stream.scaladsl._
 import dragisa.kafka.config.KafkaConfig
 import org.apache.kafka.clients.consumer.{ConsumerConfig, ConsumerRecord}
 import org.slf4j.LoggerFactory
-import pureconfig._
-import pureconfig.generic.auto._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
@@ -20,7 +18,7 @@ object Main extends App {
 
   private val logger = LoggerFactory.getLogger(getClass)
 
-  ConfigSource.default.at("dragisa.kafka").load[KafkaConfig] match {
+  KafkaConfig.load match {
     case Left(error)       =>
       throw new RuntimeException(s"Bad config: ${error.toList.map(_.description).mkString("\n")}")
       sys.exit(-1)

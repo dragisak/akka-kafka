@@ -4,14 +4,13 @@ import dragisa.kafka.config.KafkaConfig
 import io.circe.parser._
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatest.matchers.should.Matchers._
-import pureconfig.ConfigSource
-import pureconfig.generic.auto._
 
 import java.time.ZonedDateTime
 import java.util.UUID
 
 class FacetSerdeTest extends AnyWordSpec {
-  private val kafkaConfig = ConfigSource.default.at("dragisa.kafka").loadOrThrow[KafkaConfig]
+  private val kafkaConfig = KafkaConfig.loadOrThrow
+
   "key bytes" should {
     val bytes: Array[Byte] = Array(
       0, 0, 0, 10, -14, 38, 115, 105, 102, 116, 101, 114, 121, 95, 112, 114, 111, 100, 117, 99, 116, 95, 117, 115, 101,
