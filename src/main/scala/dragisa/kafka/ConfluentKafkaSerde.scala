@@ -4,10 +4,9 @@ import com.sksamuel.avro4s.{AvroFormat, BinaryFormat, Decoder, Encoder, SchemaFo
 import com.sksamuel.avro4s.kafka.GenericSerde
 
 /**
- * We don't care about schema nor talking to schema registry. String Confluent headers from payload.
+ * We don't care about schema nor talking to schema registry. sStrips Confluent headers (first 5 bytes) from payload.
  *
- * See
- * https://docs.confluent.io/platform/current/schema-registry/serdes-develop/index.html#wire-format
+ * See https://docs.confluent.io/platform/current/schema-registry/serdes-develop/index.html#wire-format
  */
 class ConfluentKafkaSerde[T >: Null: SchemaFor: Encoder: Decoder] extends GenericSerde[T](BinaryFormat) {
 
