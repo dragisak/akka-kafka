@@ -1,6 +1,6 @@
 package dragisa.kafka
 
-import com.sksamuel.avro4s.{AvroFormat, BinaryFormat, Decoder, Encoder, SchemaFor}
+import com.sksamuel.avro4s.{BinaryFormat, Decoder, Encoder, SchemaFor}
 import com.sksamuel.avro4s.kafka.GenericSerde
 
 /**

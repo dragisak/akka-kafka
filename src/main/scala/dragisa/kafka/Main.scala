@@ -4,11 +4,8 @@ import akka.actor.{ActorSystem, CoordinatedShutdown}
 import akka.kafka.scaladsl._
 import akka.kafka.{ConsumerSettings, Subscriptions}
 import akka.stream.scaladsl._
-import com.sksamuel.avro4s.{AvroInputStream, AvroSchema}
-import dragisa.kafka
 import dragisa.kafka.config.KafkaConfig
 import org.apache.kafka.clients.consumer.{ConsumerConfig, ConsumerRecord}
-import org.apache.kafka.common.serialization.ByteArrayDeserializer
 import org.slf4j.LoggerFactory
 import pureconfig._
 import pureconfig.generic.auto._
@@ -81,19 +78,4 @@ object Main extends App {
     )
   }
 
-  private def logByteMessage(msg: ConsumerRecord[Array[Byte], Array[Byte]]): Unit = {
-    logger.info(
-      s"Got ${msg.value().length} bytes"
-    )
-  }
-
-//  private def deserialize(rec: ConsumerRecord[Array[Byte], Array[Byte]]): Option[FacetValue] = {
-//    val input = AvroInputStream.binary[FacetValue]
-//    for {
-//      bytes <- Option(rec.value())
-//      src    = input.from(bytes)
-//      res   <- src.build.iterator.toSeq.headOption
-//
-//    } yield res
-//  }
 }
