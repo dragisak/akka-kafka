@@ -5,8 +5,7 @@ import com.sksamuel.avro4s.kafka.GenericSerde
 
 /** See https://docs.confluent.io/platform/current/schema-registry/serdes-develop/index.html#wire-format
   */
-class ConfluentKafkaSerde[T >: Null: SchemaFor: Encoder: Decoder](avroFormat: AvroFormat = BinaryFormat)
-    extends GenericSerde[T](avroFormat) {
+class ConfluentKafkaSerde[T >: Null: SchemaFor: Encoder: Decoder] extends GenericSerde[T] {
   override def deserialize(topic: String, data: Array[Byte]): T = {
     if (data == null) {
       null
@@ -33,6 +32,5 @@ class ConfluentKafkaSerde[T >: Null: SchemaFor: Encoder: Decoder](avroFormat: Av
 }
 
 object ConfluentKafkaSerde {
-  def apply[T >: Null: SchemaFor: Encoder: Decoder](avroFormat: AvroFormat = BinaryFormat): GenericSerde[T] =
-    new ConfluentKafkaSerde[T](avroFormat)
+  def apply[T >: Null: SchemaFor: Encoder: Decoder]: GenericSerde[T] = new ConfluentKafkaSerde[T]
 }

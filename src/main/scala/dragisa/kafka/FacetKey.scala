@@ -45,5 +45,5 @@ object FacetKey {
 //  implicit val faceKeyDecoder: Decoder[FacetKey]      = Decoder[FacetKey]
 //  implicit val faceKeyEncoder: Encoder[FacetKey]      = Encoder[FacetKey]
 
-  val serde: GenericSerde[FacetKey] = ConfluentKafkaSerde[FacetKey](BinaryFormat)
+  val serde: GenericSerde[FacetKey] = ConfluentKafkaSerde[FacetKey]
 }

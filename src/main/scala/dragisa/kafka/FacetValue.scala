@@ -78,6 +78,6 @@ object FacetValue {
 
   private implicit val snake: FieldMapper = SnakeCase
 
-  val serde: GenericSerde[FacetValue] = ConfluentKafkaSerde[FacetValue](BinaryFormat)
+  val serde: GenericSerde[FacetValue] = ConfluentKafkaSerde[FacetValue]
 
 }
