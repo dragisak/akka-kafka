@@ -18,16 +18,11 @@ object DateTimeAvro {
 
   implicit val zonedDateTimeDecoder: Decoder[ZonedDateTime] = new Decoder[ZonedDateTime] {
     override val schemaFor: SchemaFor[ZonedDateTime] = zonedDateTimeSchemaFor
-    override def decode(value: Any): ZonedDateTime   = value match {
-      case dt: String =>
-        Try(ZonedDateTime.parse(dt)) match {
-          case Success(zdt) => zdt
-          case Failure(err) =>
-            throw new Avro4sDecodingException(s"Can't parse $dt", value, this)
-              .initCause(err)
-        }
-
-      case _ => throw new Avro4sDecodingException("Type must be String", value, this)
+    override def decode(value: Any): ZonedDateTime   = Try(ZonedDateTime.parse(value.toString)) match {
+      case Success(zdt) => zdt
+      case Failure(err) =>
+        throw new Avro4sDecodingException(s"Can't parse $value", value, this)
+          .initCause(err)
     }
   }
 }

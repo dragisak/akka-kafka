@@ -2,8 +2,6 @@ package dragisa.kafka
 
 import com.sksamuel.avro4s._
 import com.sksamuel.avro4s.kafka.GenericSerde
-import org.apache.avro.Schema
-import org.apache.kafka.common.serialization.Serde
 
 import java.util.UUID
 
@@ -47,5 +45,5 @@ object FacetKey {
 //  implicit val faceKeyDecoder: Decoder[FacetKey]      = Decoder[FacetKey]
 //  implicit val faceKeyEncoder: Encoder[FacetKey]      = Encoder[FacetKey]
 
-  val facetKeySerde: GenericSerde[FacetKey] = new GenericSerde[FacetKey](BinaryFormat)
+  val facetKeySerde: GenericSerde[FacetKey] = KafkaSerde[FacetKey](BinaryFormat)
 }
